@@ -1,0 +1,203 @@
+openapi: 3.0.3
+info:
+    version: 1.0.0
+    title: Swedish Evidence Provider API
+    termsOfService: "https://github.com/DIGGSweden/SDG/terms/"
+    contact:
+        email: sdg-dev@digg.se
+        url: "https://github.com/DIGGSweden/SDG/contact/"
+    license:
+        name: Apache 2.0
+        url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+    x-logo:
+        url: "https://redocly.github.io/openapi-template/logo.png"
+    description: |
+        This is the API for fetching evidences from Swedish evidence providers to be previewed and shared via the Swedish preview space. 
+
+        # Authorization
+        For accessing any of the endpoints the requester needs to provide an authorization header with required token.
+
+        An example for how to use bearerAuth:
+        ``` 
+        Authorization: Bearer <jwt-token>
+        ```
+tags:
+    - name: Evidence exchange
+      description: Request an evidence for a specific user and evidence type
+servers:
+    - url: "https://evidence.sandbox.digg.se/api/v1"
+paths:
+    "/business-registries/{businessRegistryId}/evidence-files":
+        post:
+            tags:
+                - Evidence exchange
+            summary: Get evidence files for evidence type and user
+            description: |
+                Returns the structured and unstructured data files for an evidence type and user. For structured data a schema shall be provided.
+            operationId: submitEvidenceRequest
+            parameters:
+                - name: businessRegistryId
+                  in: path
+                  description: The identifier of the business registry
+                  required: true
+                  schema:
+                      type: string
+                - name: evidenceTypeClassification
+                  in: header
+                  description: The identifier of an evidence type
+                  required: true
+                  schema:
+                      type: string
+                - name: sdgEvidenceRequestorAgentId
+                  in: header
+                  description: The identifier, according to the schemeID urn:cef.eu:names:identifier:EAS:0190, of the SDG-agent requesting the evidence on behalf of a natural or legal person.
+                  schema:
+                      type: string
+                - name: sdgEvidenceRequestorAgentName
+                  in: header
+                  description: The name of the SDG-agent requesting the evidence on behalf of a natural or legal person.
+                  schema:
+                      type: string
+                - name: sdgPersonFamilyName
+                  in: header
+                  description: The family name of person requesting the evidence.
+                  schema:
+                      type: string
+                - name: sdgPersonGivenName
+                  in: header
+                  description: The family name of person requesting the evidence.
+                  schema:
+                      type: string
+                - name: sdgPersonDateOfBirth
+                  in: header
+                  description: Date of birth for the person requesting the evidence.
+                  schema:
+                      type: string
+                - name: sdgPersonIdentifier
+                  in: header
+                  description: eIdas identifier.
+                  schema:
+                      type: string
+                - name: sdgDistributedAsFormat
+                  in: header
+                  description: Describes format of the evidence file requested.
+                  schema:
+                      type: string
+            requestBody:
+                description: The EvidenceRequest object holds attributes to specify identify of person and evidence type.
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/EvidenceRequestSubject"
+            responses:
+                "200":
+                    description: "EvidenceResponse"
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/EvidenceResponse"
+                "401":
+                    description: Access token is missing or invalid
+                "403":
+                    description: Forbidden
+                "404":
+                    description: Evidence not found
+                "500":
+                    description: Internal server error
+                "503":
+                    description: Service unavailable
+
+components:
+    securitySchemes:
+        bearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+    schemas:
+        EvidenceRequestSubject:
+            description: "The EvidenceRequest object holds attributes to specify identify of person and evidence type."
+            type: object
+            properties:
+                personalNumber:
+                    type: string
+                    maxLength: 12
+                    minLength: 12
+                    pattern: ^((19|20)[0-9]{2}(0[1-9]|1[0-2])(0[1-9]|1[0-9]|2[0-9]|3[0-1]|6[1-9]|7[0-9]|8[0-9]|9[0-1])[0-9]{4})$
+        EvidenceResponse:
+            description: "The EvidenceResponse object includes an array of human readable files in PDF format. It also contains the structured data file along with its schema."
+            type: object
+            properties:
+                evidenceFiles:
+                    description: "Structured data in XML or json format"
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            mimeType:
+                                type: string
+                            content:
+                                type: string
+                                format: byte
+                            fileName:
+                                type: string
+                            evidenceName:
+                                type: string
+                            structuredData:
+                                type: boolean
+                            structuredDataSchema:
+                                description: "Schema that describes the structured data"
+                                type: string
+                                example: "https://sr.oots.tech.europa.eu/evidencetypeclassifications/EU/b6a49e54-8b3c-4688-acad-380440dc5962"
+                            sdgIdentifier:
+                                description: ""
+                                type: string
+                            sdgIssuingAuthorityId:
+                                description: ""
+                                type: string
+                            sdgIssuingAuthorityName:
+                                description: ""
+                                type: string
+                            sdgIsConformantTo:
+                                type: object
+                                properties:
+                                    sdgEvidenceTypeClassification:
+                                        description: ""
+                                        type: string
+                                    sdgTitle:
+                                        description: ""
+                                        type: object
+                                        additionalProperties:
+                                            type: string
+                                        example:
+                                            EN: Extract of the Commercial Register (Type A)
+                                            DE: Amtlicher chronologischer Ausdruck aus dem Handelsregister A
+                            sdgDescription:
+                                description: ""
+                                type: object
+                                additionalProperties:
+                                    type: string
+                                example:
+                                    EN: Extract of the trade register department A for sole traders and corporations. (for example OHG, KG, GmbH, AG)
+                                    DE: Auszug aus dem Handelsregister Abteilung A für Einzelkaufleute und Personengesellschaften (z.B. OHG, KG, GmbH, AG)
+                            sdgIssuingDate:
+                                description: ""
+                                type: string
+                            sdgDistributionFormat:
+                                description: ""
+                                type: string
+                            sdgDistributionLanguage:
+                                description: ""
+                                type: string
+                            sdgDistributionConformsTo:
+                                description: ""
+                                type: string
+                            sdgDistributionTransformation:
+                                description: ""
+                                type: string
+                            sdgValiditiyPeriodStatDate:
+                                description: ""
+                                type: string
+                            sdgValiditiyPeriodEndsDate:
+                                description: ""
+                                type: string
