@@ -7,18 +7,19 @@ Här finns beskrivningen av API:et intermediationSE vilket är det API som svens
 ```mermaid
 flowchart LR
     subgraph Digg
+        direction LR
         FGT(Förhandsgranskningstjänsten)-->AT(SDG Auktorisationstjänst)
         AT-->LT(Legitimeringstjänst)
     end
-    subgraph Bevisproducent
+    subgraph Bevisproducent 
         FGT-->BT(Bevistjänst)
     end
 ```
 
 ### Flödesbeskrivning
 1. Förhandsgranskningstjänsten återautentiserar andvändaren mha SDG auktorisationstjänst som i sin tur nyttjar legitimeringstjänsten Sweden Connect.
-2. En lyckat autentisering ger förhandsgranskningstjänsten en accesstoken som skickas med till bevisproducentens bevistjänst. 
-3. Med hjälp av accesstoken auktoriserar bevisproducenten API-anropet och lämnar ett bevissvar till förhandsgranskningstjänsten där användaren avgör om beviset ska delas och föras över för vidare användning i sitt pågående förfarande. 
+2. En lyckat autentisering ger förhandsgranskningstjänsten ett åtkomstintyg (accesstoken) som skickas med till bevisproducentens bevistjänst. 
+3. Med hjälp av åtkomstintyget auktoriserar bevisproducenten API-anropet och lämnar ett bevissvar till förhandsgranskningstjänsten där användaren avgör om beviset ska delas och föras över för vidare användning i sitt pågående förfarande. 
 
 ## Bevisdelning och förhandsgranskning, detaljerat flöde
 ```mermaid
