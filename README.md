@@ -78,7 +78,7 @@ sequenceDiagram
 7. PreviewSpaceBE bygger ihop och skickar ett idtoken request till AuthorizationServer
 8. Authorization svarar med idtoken, accesstoken, refreshtoken.
 9. PreviewSpaceBE sparar ner accesstoken i redis.
-10. Användaren blir omdirigerad tillbaka till PSFE
+10. Användaren blir omdirigerad tillbaka till PreviewSpaceFE
 11. Användaren initierar auktorisation
 12. PreviewSpaceBE bygger ihop och skickar ett authorization request till AuthorizationServer
 13. Auktorisering av klient
