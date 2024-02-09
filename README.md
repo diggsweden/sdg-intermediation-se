@@ -2,7 +2,7 @@
 
 # SDG Bevisdelning, inom det tekniska systemet för bevisutbyte
 Här finns beskrivningen av API:et intermediationSE vilket är det API som svenska bevisproducenter implementerar, för att via Diggs förhandsgranskningstjänst, låta en användare dela bevis via det tekniska systemet för bevisutbyte (OOTS).
-[Open-API-beskrivningen finns här](https://diggsweden.github.io/sdg-intermediation.se/)
+[Open-API-beskrivningen finns här](https://diggsweden.github.io/sdg-intermediation-se/)/
 
 ## Bevisdelning och förhandsgranskning, översiktligt flöde
 ```mermaid
