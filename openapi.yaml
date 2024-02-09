@@ -2,15 +2,9 @@ openapi: 3.0.3
 info:
     version: 1.0.0
     title: Swedish Evidence Provider API
-    termsOfService: "https://github.com/DIGGSweden/SDG/terms/"
-    contact:
-        email: sdg-dev@digg.se
-        url: "https://github.com/DIGGSweden/SDG/contact/"
     license:
-        name: Apache 2.0
-        url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-    x-logo:
-        url: "https://redocly.github.io/openapi-template/logo.png"
+        name: "CC0 1.0 universell"
+        url: "https://creativecommons.org/publicdomain/zero/1.0/legalcode.sv"
     description: |
         This is the API for fetching evidences from Swedish evidence providers to be previewed and shared via the Swedish preview space. 
 
@@ -25,9 +19,12 @@ tags:
     - name: Evidence exchange
       description: Request an evidence for a specific user and evidence type
 servers:
-    - url: "https://evidence.sandbox.digg.se/api/v1"
+    - url: https://sdg-intermediation-se-digg-sdg-build.apps.diggdev.capdigg.sgit.se
+      description: Development server
+    - url: http://localhost:9200
+      description: Local development server
 paths:
-    "/business-registries/{businessRegistryId}/evidence-files":
+    "/api/v1/evidence-files":
         post:
             tags:
                 - Evidence exchange
@@ -37,7 +34,7 @@ paths:
             operationId: submitEvidenceRequest
             parameters:
                 - name: businessRegistryId
-                  in: path
+                  in: header
                   description: The identifier of the business registry
                   required: true
                   schema:
@@ -50,7 +47,7 @@ paths:
                       type: string
                 - name: sdgEvidenceRequestorAgentId
                   in: header
-                  description: The identifier, according to the schemeID urn:cef.eu:names:identifier:EAS:0190, of the SDG-agent requesting the evidence on behalf of a natural or legal person.
+                  description: The identifier, according to the schemeID of the SDG-agent requesting the evidence on behalf of a natural or legal person.
                   schema:
                       type: string
                 - name: sdgEvidenceRequestorAgentName
@@ -83,6 +80,11 @@ paths:
                   description: Describes format of the evidence file requested.
                   schema:
                       type: string
+                - name: authorization
+                  in: header
+                  description: Authorization header.
+                  schema:
+                      type: string
             requestBody:
                 description: The EvidenceRequest object holds attributes to specify identify of person and evidence type.
                 required: true
@@ -97,6 +99,12 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/EvidenceResponse"
+                "202":
+                    description: "ProcessingEvidenceResponse"
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ProcessingEvidenceResponse"
                 "401":
                     description: Access token is missing or invalid
                 "403":
@@ -201,3 +209,13 @@ components:
                             sdgValiditiyPeriodEndsDate:
                                 description: ""
                                 type: string
+        ProcessingEvidenceResponse:
+            description: "The ProcessingEvidenceResponse object includes information about an estimate of when the evidences is available"
+            type: object
+            properties:
+                estimatedAvailability:
+                    description: "Describes an estimate in date/time when the evidence is available"
+                    type: string
+                    example: "2023-11-04T10:00:00Z"
+
+
