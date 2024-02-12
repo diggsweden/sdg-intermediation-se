@@ -2,7 +2,8 @@
 
 # SDG Bevisdelning, inom det tekniska systemet för bevisutbyte
 Här finns beskrivningen av API:et intermediationSE vilket är det API som svenska bevisproducenter implementerar, för att via Diggs förhandsgranskningstjänst, låta en användare dela bevis via det tekniska systemet för bevisutbyte (OOTS).
-[Open-API-beskrivningen finns här](https://diggsweden.github.io/sdg-intermediation-se/)/
+
+[Open-API-specen finns här](https://diggsweden.github.io/sdg-intermediation-se/)
 
 ## Bevisdelning och förhandsgranskning, översiktligt flöde
 ```mermaid
@@ -47,26 +48,24 @@ sequenceDiagram
     PSBE ->> AS: 7. IdTokenRequest(code)
     AS ->> PSBE: 8. TokenResponse(idtoken, accesstoken, refreshtoken)
     PSBE ->> RED: 9. Store accesstoken for reuse
-    PSBE ->> PSFE: 10. Redirect from PSBE to PSFE /login
-    PSFE ->> PSBE: 11. GET /authorize/authorizationRequest
-    PSBE ->> AS: 12. AuthorizationRequest, with redirect uri, to AuthorizationServer
-    Note over AS,ATS: 13. Evidence provider authorization
-    AS ->> PSBE: 14. Redirect from AuthorizationServer to PSBE including authorization code
-    PSBE ->> AS: 15. AccessTokenRequest(code)
-    AS ->> PSBE: 16. TokenResponse(accesstoken, refreshtoken)
-    PSBE ->> RED: 17. Store accesstoken for reuse
-    PSBE ->> PSFE: 18. Redirect from PSBE to PSFE
-    PSFE ->> PSBE: 19. Post /documents/available to fetch evidences
-    PSBE ->> AS: 20. Get user info (accesstoken)
-    AS ->> PSBE: 21. User info response
-    PSBE ->> PSBE: 22. Match evidence request against user information
-    PSBE ->> IMSE: 23. POST /evidence-files (accesstoken)
-    IMSE ->> EP: 24. GET evidence files from provider (accesstoken)
-    EP ->> EP: 25. Validate accesstoken
-    EP -->> IMSE: 26. Return documents
-    IMSE -->> PSBE: 27. Return documents
-    PSBE -->> PSFE: 28. Show documents
-    PSFE -->> PDFE: 29. Share documents
+    PSBE ->> AS: 10. AuthorizationRequest, with redirect uri, to AuthorizationServer
+    Note over AS,ATS: 11. Evidence provider authorization
+    AS ->> PSBE: 12. Redirect from AuthorizationServer to PSBE including authorization code
+    PSBE ->> AS: 13. AccessTokenRequest(code)
+    AS ->> PSBE: 14. TokenResponse(accesstoken, refreshtoken)
+    PSBE ->> RED: 15. Store accesstoken for reuse
+    PSBE ->> PSFE: 16. Redirect from PSBE to PSFE
+    PSFE ->> PSBE: 17. Post /documents/available to fetch evidences
+    PSBE ->> AS: 18. Get user info (accesstoken)
+    AS ->> PSBE: 19. User info response
+    PSBE ->> PSBE: 20. Match evidence request against user information
+    PSBE ->> IMSE: 21. POST /evidence-files (accesstoken)
+    IMSE ->> EP: 22. GET evidence files from provider (accesstoken)
+    EP ->> EP: 23. Validate accesstoken
+    EP -->> IMSE: 24. Return documents
+    IMSE -->> PSBE: 26. Return documents
+    PSBE -->> PSFE: 27. Show documents
+    PSFE -->> PDFE: 28. Share documents
 ```
 
 ### Flödesbeskrivning
@@ -79,24 +78,22 @@ sequenceDiagram
 7. PreviewSpaceBE bygger ihop och skickar ett idtoken request till AuthorizationServer
 8. Authorization svarar med idtoken, accesstoken, refreshtoken.
 9. PreviewSpaceBE sparar ner accesstoken i redis.
-10. Användaren blir omdirigerad tillbaka till PreviewSpaceFE
-11. Användaren initierar auktorisation
-12. PreviewSpaceBE bygger ihop och skickar ett authorization request till AuthorizationServer
-13. Auktorisering av klient
-14. AuthorizationServer svarar förbestämd callback endpoint med en authorization code
-15. PreviewSpaceBE bygger ihop och skickar ett accesstoken request
-16. AuthorizationServer svarar med accesstoken och refreshtoken
-17. PreviewSpaceBE sparar ner accesstoken i redis
-18. Användaren blir omdirigerad tillbaka till PSFE
-19. Bevishämtning initieras
-20. PreviewSpaceBE skickar en förfrågan till AuthorizationServer för att hämta användarinformation
-21. AuthorizationServer svarar med användarinformation
-22. PreviewSpaceBE matchar information från evidence request mot användarinformationen.
-23. PreviewSpaceBE skickar förfrågan, som innehåller accesstoken, för bevishämtning till IntermediationSE
-24. IntermediationSE skickar förfrågan, som innehåller accesstoken, till bevisproducent
-25. Bevisproducent validerar accesstoken
-26. Bevisproducent returnerar IntermediationSE med bevis
-27. IntermediationSE returnerar bevis till PreviewSpaceBE
-28. PreviewSpaceBE returnerar bevis till PreviewSpaceFE som visar upp hämtade bevis för användaren.
-29. Användare väljer att dela bevis med förfarande
+10. PreviewSpaceBE bygger ihop och skickar ett authorization request till AuthorizationServer
+11. Auktorisering av klient
+12. AuthorizationServer svarar förbestämd callback endpoint med en authorization code
+13. PreviewSpaceBE bygger ihop och skickar ett accesstoken request
+14. AuthorizationServer svarar med accesstoken och refreshtoken
+15. PreviewSpaceBE sparar ner accesstoken i redis
+16. Användaren blir omdirigerad tillbaka till PSFE
+17. Bevishämtning initieras
+18. PreviewSpaceBE skickar en förfrågan till AuthorizationServer för att hämta användarinformation
+19. AuthorizationServer svarar med användarinformation
+20. PreviewSpaceBE matchar information från evidence request mot användarinformationen.
+21. PreviewSpaceBE skickar förfrågan, som innehåller accesstoken, för bevishämtning till IntermediationSE
+22. IntermediationSE skickar förfrågan, som innehåller accesstoken, till bevisproducent
+23. Bevisproducent validerar accesstoken
+24. Bevisproducent returnerar IntermediationSE med bevis
+25. IntermediationSE returnerar bevis till PreviewSpaceBE
+26. PreviewSpaceBE returnerar bevis till PreviewSpaceFE som visar upp hämtade bevis för användaren.
+27. Användare väljer att dela bevis med förfarande
 
