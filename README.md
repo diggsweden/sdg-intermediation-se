@@ -5,6 +5,8 @@ Här finns beskrivningen av API:et intermediationSE vilket är det API som svens
 
 [Open-API-specen finns här](https://diggsweden.github.io/sdg-intermediation-se/)
 
+För frågor om API:et, hör av er till [oss](mailto:sdg@digg.se)
+
 ## Bevisdelning och förhandsgranskning, översiktligt flöde
 ```mermaid
 flowchart LR
