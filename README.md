@@ -32,6 +32,7 @@ sequenceDiagram
     participant PDFE as ProcedureDemoFE
     participant PSFE as PreviewSpaceFE
     participant PSBE as PreviewSpaceBE
+    participant DSD as DSD
     participant IMSE as IntermediationSE
     participant VAL as Valkey
     box Auktorisation
@@ -42,16 +43,15 @@ sequenceDiagram
 
     USR ->> PDFE: 1. Start procedure
     PDFE ->> PSFE: 2. Redirect to preview
-    PSFE ->> PSBE: 3. GET /authorize/login
-
-    PSBE ->> AS: 4. AuthenticationRequest, with redirect uri, to AuthorizationServer
-    Note over AS,ATS: 5. User authentication
-    AS ->> PSBE: 6. Response from AuthorizationServer to PSBE including authentication code
-    PSBE ->> AS: 7. IdTokenRequest(code)
-    AS ->> PSBE: 8. TokenResponse(idtoken, accesstoken, refreshtoken)
-    PSBE ->> VAL: 9. Store accesstoken for reuse
-    PSBE ->> AS: 10. AuthorizationRequest, with redirect uri, to AuthorizationServer
-    Note over AS,ATS: 11. Evidence provider authorization
+    PSFE ->> PSBE: 3. GET /authenticate/login
+    PSBE ->> DSD: 4. Get LOA for Evidence
+    DSD ->> PSBE: 5. Return LOA
+    PSBE ->> AS: 6. AuthenticationRequest, with redirect uri, to AuthorizationServer
+    Note over AS,ATS: 7. User authentication
+    AS ->> PSBE: 8. Response from AuthorizationServer to PSBE including authentication code
+    PSBE ->> AS: 9. IdTokenRequest(code)
+    AS ->> PSBE: 10. TokenResponse(idtoken, accesstoken, refreshtoken)
+    PSBE ->> AS: 11. AuthorizationRequest, with redirect uri, to AuthorizationServer
     AS ->> PSBE: 12. Redirect from AuthorizationServer to PSBE including authorization code
     PSBE ->> AS: 13. AccessTokenRequest(code)
     AS ->> PSBE: 14. TokenResponse(accesstoken, refreshtoken)
@@ -65,23 +65,23 @@ sequenceDiagram
     IMSE ->> EP: 22. POST /evidence-files (accesstoken)
     EP ->> EP: 23. Validate accesstoken
     EP -->> IMSE: 24. Return documents
-    IMSE -->> PSBE: 26. Return documents
-    PSBE -->> PSFE: 27. Show documents
-    PSFE -->> PDFE: 28. Share documents
+    IMSE -->> PSBE: 25. Return documents
+    PSBE -->> PSFE: 26. Show documents
+    PSFE -->> PDFE: 27. Share documents
 ```
 
 ### Flödesbeskrivning
 1. Användaren besöker förfarandet och förbereder en bevisbegäran
 2. Användaren initierar autentisering
 3. Användaren väljer att logga in och initierar legitimeringsförfrågan
-4. PreviewSpaceBE bygger ihop och skickar ett *AuthenticationRequest* till AuthorizationServer, samtidigt blir användaren omdirigerad till id-tjänsten
-5. Användaren legitimerar sig i id-tjänsten
-6. AuthorizationServer svarar förbestämd callback endpoint med en authentication code
-7. PreviewSpaceBE bygger ihop och skickar ett idtoken request till AuthorizationServer
-8. AuthorizationServer svarar med idtoken, accesstoken, refreshtoken.
-9. PreviewSpaceBE sparar ner accesstoken i Valkey session store.
-10. PreviewSpaceBE bygger ihop och skickar ett *AuthorizationRequest* till AuthorizationServer
-11. Auktorisering av klient
+4. Get Level of assurance from the Data Service Directory
+5. Return tLOA from DSD
+6. PreviewSpaceBE bygger ihop och skickar ett *AuthenticationRequest* till AuthorizationServer, samtidigt blir användaren omdirigerad till id-tjänsten
+7. Användaren legitimerar sig i id-tjänsten
+8. AuthorizationServer svarar förbestämd callback endpoint med en authentication code
+9. PreviewSpaceBE bygger ihop och skickar ett idtoken request till AuthorizationServer
+10. AuthorizationServer svarar med idtoken, accesstoken, refreshtoken.
+11. PreviewSpaceBE bygger ihop och skickar ett *AuthorizationRequest* till AuthorizationServer
 12. AuthorizationServer svarar förbestämd callback endpoint med en authorization code
 13. PreviewSpaceBE bygger ihop och skickar ett accesstoken request
 14. AuthorizationServer svarar med accesstoken och refreshtoken
