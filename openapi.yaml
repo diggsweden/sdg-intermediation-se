@@ -1,221 +1,461 @@
 openapi: 3.0.3
 info:
-    version: 1.0.0
-    title: Swedish Evidence Provider API
-    license:
-        name: "CC0 1.0 universell"
-        url: "https://creativecommons.org/publicdomain/zero/1.0/legalcode.sv"
-    description: |
-        This is the API for fetching evidences from Swedish evidence providers to be previewed and shared via the Swedish preview space. 
+  version: 2.0.0
+  title: Swedish Evidence Provider API
+  contact:
+    name: API Support
+    url: https://www.digg.se/digitala-tjanster/tekniska-systemet-for-gransoverskridande-automatiskt-utbyte-av-bevis---oots
+    email: sdg@digg.se
+  license:
+    name: "CC0 1.0 universell"
+    url: "https://creativecommons.org/publicdomain/zero/1.0/legalcode.sv"
+  # termsOfService omitted intentionally, could be added by the evidence provider
+  description: |
+    This is the API for fetching evidences from Swedish evidence providers to be previewed and shared via the Swedish preview space.
 
-        # Authorization
-        For accessing any of the endpoints the requester needs to provide an authorization header with required token.
+    Detta API används för att hämta bevis från svenska bevisproducenter så att de kan förhandsgranskas och delas via den svenska förhandsgranskningstjänsten.
 
-        An example for how to use bearerAuth:
-        ``` 
-        Authorization: Bearer <jwt-token>
-        ```
+    # Authorization
+    Users are authenticated in the Swedish preview space and in order to be able to fetch evidences, an access token is created for the given provider and passed as an authorization header.
+    Evidence providers use the access token to authorize both the user and the API client.
+
+    An example for how to use bearerAuth:
+    ``` 
+    Authorization: Bearer <jwt-token>
+    ```
+  x-limitations: There are no known problems or limitations.
+externalDocs:
+  description: |
+    This API is to be provided by the evidence producer and hence no SLA is stated in this specification. However, the general SLA for the OOTS of 98% is expected.
+    Further documentation of this API is provided at GitHub.
+  url: https://github.com/diggsweden/sdg-intermediation-se/blob/main/README.md
 tags:
-    - name: Evidence exchange
-      description: Request an evidence for a specific user and evidence type
+  - name: Evidence exchange
+    description: Request evidence file(s) for a specific user and evidence type
+  - name: API-info
+    description: Info about this API
 servers:
-    - url: https://sdg-intermediation-se-digg-sdg-build.apps.diggdev.capdigg.sgit.se
-      description: Development server
-    - url: http://localhost:9200
-      description: Local development server
+  - url: https://evidence.provider.se/api/v2
+    description: Evidence provider server URL. Replace the domain name with the actual one for a specific evidence provider.
+
+security:
+  - bearerAuth: []
+
 paths:
-    "/api/v1/evidence-files":
-        post:
-            tags:
-                - Evidence exchange
-            summary: Get evidence files for evidence type and user
-            description: |
-                Returns the structured and unstructured data files for an evidence type and user. For structured data a schema shall be provided.
-            operationId: submitEvidenceRequest
-            parameters:
-                - name: businessRegistryId
-                  in: header
-                  description: The identifier of the business registry
-                  required: true
-                  schema:
-                      type: string
-                - name: evidenceTypeClassification
-                  in: header
-                  description: The identifier of an evidence type
-                  required: true
-                  schema:
-                      type: string
-                - name: sdgEvidenceRequestorAgentId
-                  in: header
-                  description: The identifier, according to the schemeID of the SDG-agent requesting the evidence on behalf of a natural or legal person.
-                  schema:
-                      type: string
-                - name: sdgEvidenceRequestorAgentName
-                  in: header
-                  description: The name of the SDG-agent requesting the evidence on behalf of a natural or legal person.
-                  schema:
-                      type: string
-                - name: sdgPersonFamilyName
-                  in: header
-                  description: The family name of person requesting the evidence.
-                  schema:
-                      type: string
-                - name: sdgPersonGivenName
-                  in: header
-                  description: The family name of person requesting the evidence.
-                  schema:
-                      type: string
-                - name: sdgPersonDateOfBirth
-                  in: header
-                  description: Date of birth for the person requesting the evidence.
-                  schema:
-                      type: string
-                - name: sdgPersonIdentifier
-                  in: header
-                  description: eIdas identifier.
-                  schema:
-                      type: string
-                - name: sdgDistributedAsFormat
-                  in: header
-                  description: Describes format of the evidence file requested.
-                  schema:
-                      type: string
-                - name: authorization
-                  in: header
-                  description: Authorization header.
-                  schema:
-                      type: string
-            requestBody:
-                description: The EvidenceRequest object holds attributes to specify identify of person and evidence type.
-                required: true
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/EvidenceRequestSubject"
-            responses:
-                "200":
-                    description: "EvidenceResponse"
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/EvidenceResponse"
-                "202":
-                    description: "ProcessingEvidenceResponse"
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/ProcessingEvidenceResponse"
-                "401":
-                    description: Access token is missing or invalid
-                "403":
-                    description: Forbidden
-                "404":
-                    description: Evidence not found
-                "500":
-                    description: Internal server error
-                "503":
-                    description: Service unavailable
-
+  "/evidence-files":
+    post:
+      tags:
+        - Evidence exchange
+      summary: Get evidence file(s) for an evidence type and user
+      description: |
+        Returns the structured and unstructured data files for an evidence type and user.
+      operationId: submitEvidenceRequest
+      requestBody:
+        description: The EvidenceRequestBody object holds attributes to specify identity of the person and evidence type.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvidenceRequestBody"
+            examples:
+              evidenceRequestBodyExample:
+                $ref: "#/components/examples/EvidenceRequestBodyExample"
+      responses:
+        "200":
+          description: "Successful response with evidence file(s)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceFilesBody"
+              examples:
+                evidenceFilesBodyExample:
+                  $ref: "#/components/examples/EvidenceFilesBodyExample"
+        "202":
+          description: "Successful response with an estimate of when the evidence is available"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessingEvidenceResponse"
+              example:
+                estimatedAvailability: "2023-11-04T10:00:00Z"
+        "400":
+          description: "Invalid input"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+              examples:
+                InvalidInputExample:
+                  $ref: "#/components/examples/InvalidInputExample"
+        "401":
+          description: "Invalid access token"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+              examples:
+                InvalidAccessTokenExample:
+                  $ref: "#/components/examples/InvalidAccessTokenExample"
+        "404":
+          description: "Evidence not found"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+              examples:
+                EvidenceNotFoundExample:
+                  $ref: "#/components/examples/EvidenceNotFoundExample"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+        "504":
+          description: "Timeout from evidence provider"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+              examples:
+                EvidenceProviderTimeoutExample:
+                  $ref: "#/components/examples/EvidenceProviderTimeoutExample"
+  "/api-info":
+    get:
+      tags: [API-info]
+      summary: Returns API metadata
+      description: Returns API metadata
+      operationId: apiInfo
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ApiInfoResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
 components:
-    securitySchemes:
-        bearerAuth:
-            type: http
-            scheme: bearer
-            bearerFormat: JWT
-    schemas:
-        EvidenceRequestSubject:
-            description: "The EvidenceRequest object holds attributes to specify identify of person and evidence type."
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    EvidenceRequestBody:
+      description: "The EvidenceRequestBody object holds attributes to specify identity of person and evidence type."
+      type: object
+      required: [evidenceSubject, conversationId, messageId, requestId, evidenceProviderId, evidenceTypeClassification]
+      properties:
+        evidenceSubject:
+          $ref: "#/components/schemas/EvidenceSubject"
+        conversationId:
+          $ref: "#/components/schemas/ConversationId"
+        messageId:
+          $ref: "#/components/schemas/MessageId"
+        requestId:
+          $ref: "#/components/schemas/RequestId"
+        evidenceProviderId:
+          description: The evidence provider organization's identifier, typically provided as a Swedish organization number (organisationsnummer).
+          type: string
+          example: "2021006883"
+        evidenceTypeClassification:
+          $ref: "#/components/schemas/EvidenceTypeClassification"
+        evidenceRequesterName:
+          $ref: "#/components/schemas/MultiLingualString"
+        distributedAs:
+          $ref: "#/components/schemas/DistributionFormat"
+    EvidenceSubject:
+      description: The person whose evidence is requested.
+      type: object
+      required: [identityNumber]
+      properties:
+        identityNumber:
+          description: The evidence subject's identifier, provided as a Swedish identity number (identitetsbeteckning).
+          type: string
+          pattern: '\d{12}'
+          example: "197309069289"
+        type:
+          type: string
+          description: |
+            Type of identity number.
+            - For a person: either a Swedish personal identity number (personnummer) or a Swedish coordination number (samordningsnummer).
+          enum:
+            - PERSONAL_IDENTITY_NUMBER
+            - COORDINATION_NUMBER
+          example: "PERSONAL_IDENTITY_NUMBER"
+        naturalPerson:
+          $ref: "#/components/schemas/NaturalPerson"
+    NaturalPerson:
+      description: eIDAS natural person.
+      type: object
+      properties:
+        identifier:
+          description: eIDAS unique identifier.
+          type: string
+          example: "SE/IT/197309069289"
+        familyName:
+          description: The family name of person requesting the evidence.
+          type: string
+          minLength: 1
+          example: Greger
+        givenName:
+          description: The given name of person requesting the evidence.
+          type: string
+          minLength: 1
+          example: Nina
+        dateOfBirth:
+          description: Date of birth for the person requesting the evidence.
+          type: string
+          format: date
+          example: "1973-09-06"
+    EvidenceFilesBody:
+      description: The EvidenceFilesBody object includes information about evidence file(s).
+      type: object
+      required: [evidenceFiles]
+      properties:
+        evidenceFiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/EvidenceFile"
+    EvidenceFile:
+      type: object
+      properties:
+        mimetype:
+          type: string
+        content:
+          type: string
+          format: byte
+        filename:
+          type: string
+        issuingAuthority:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              $ref: "#/components/schemas/MultiLingualString"
+        evidenceName:
+          type: string
+        isConformantTo:
+          type: object
+          properties:
+            evidenceTypeClassification:
+              $ref: "#/components/schemas/EvidenceTypeClassification"
+            description:
+              $ref: "#/components/schemas/MultiLingualString"
+            title:
+              $ref: "#/components/schemas/MultiLingualString"
+        issuingDate:
+          type: string
+          format: date
+          example: "2024-03-15"
+        distribution:
+          type: object
+          properties:
+            format:
+              $ref: "#/components/schemas/DistributionFormat"
+            language:
+              type: array
+              items:
+                type: string
+            conformsTo:
+              type: string
+            transformation:
+              type: string
+        validityPeriod:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
+    DistributionFormat:
+      description: The format of an evidence file
+      type: string
+      minLength: 1
+      example: "application/pdf"
+    EvidenceTypeClassification:
+      description: The identifier of an evidence type
+      type: string
+      format: uri
+      example: "https://sr.oots.tech.ec.europa.eu/evidencetypeclassifications/SE/9e2c24f1-234e-439c-bd49-b6c8e3c4d87f"
+    MultiLingualString:
+      description: "String in various languages"
+      type: object
+      additionalProperties:
+        type: string
+      example:
+        en: Something in English.
+        de: Etwas auf Deutsch.
+    ProcessingEvidenceResponse:
+      description: "The ProcessingEvidenceResponse object includes information about an estimate of when the evidence is available"
+      type: object
+      properties:
+        estimatedAvailability:
+          description: "Describes an estimate in date/time when the evidence is available using RFC 3339"
+          type: string
+          format: date-time
+          example: "2023-11-04T10:00:00Z"
+    ConversationId:
+      description: Unique identifier used for tracking requests across the system.
+      type: string
+      format: uuid
+      example: fe4c71e2-68d1-446e-b029-73bb1d9f871a
+    MessageId:
+      description: Unique identifier used for tracking requests across the system.
+      type: string
+      example: 4f4db3dc-b659-4563-8154-f2e917b69b20@oots.digg.se
+    RequestId:
+      description: Unique identifier used for tracking requests across the system.
+      type: string
+      format: uuid
+      example: ddff5fbb-88b7-447b-8e25-64000365eb5b
+    ErrorBody:
+      description: "Problem details according to RFC 9457 extended with additional attributes. Should not contain sensitive data such as personal information."
+      type: object
+      required: [title, status]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+          minLength: 1
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        method:
+          type: string
+        additionalInfo:
+          type: array
+          items:
+            type: string
+  responses:
+    ApiInfoResponse:
+      description: "Metadata on this API"
+      content:
+        application/json:
+          schema:
+            title: "ApiInfoBody"
             type: object
+            required: [apiName, apiVersion, apiReleased, apiDocumentation, apiStatus]
             properties:
-                personalNumber:
-                    type: string
-                    maxLength: 12
-                    minLength: 12
-                    pattern: ^((19|20)[0-9]{2}(0[1-9]|1[0-2])(0[1-9]|1[0-9]|2[0-9]|3[0-1]|6[1-9]|7[0-9]|8[0-9]|9[0-1])[0-9]{4})$
-        EvidenceResponse:
-            description: "The EvidenceResponse object includes an array of human readable files in PDF format. It also contains the structured data file along with its schema."
-            type: object
-            properties:
-                evidenceFiles:
-                    description: "Structured data in XML or json format"
-                    type: array
-                    items:
-                        type: object
-                        properties:
-                            mimeType:
-                                type: string
-                            content:
-                                type: string
-                                format: byte
-                            fileName:
-                                type: string
-                            evidenceName:
-                                type: string
-                            structuredData:
-                                type: boolean
-                            structuredDataSchema:
-                                description: "Schema that describes the structured data"
-                                type: string
-                                example: "https://sr.oots.tech.europa.eu/evidencetypeclassifications/EU/b6a49e54-8b3c-4688-acad-380440dc5962"
-                            sdgIdentifier:
-                                description: ""
-                                type: string
-                            sdgIssuingAuthorityId:
-                                description: ""
-                                type: string
-                            sdgIssuingAuthorityName:
-                                description: ""
-                                type: string
-                            sdgIsConformantTo:
-                                type: object
-                                properties:
-                                    sdgEvidenceTypeClassification:
-                                        description: ""
-                                        type: string
-                                    sdgTitle:
-                                        description: ""
-                                        type: object
-                                        additionalProperties:
-                                            type: string
-                                        example:
-                                            EN: Extract of the Commercial Register (Type A)
-                                            DE: Amtlicher chronologischer Ausdruck aus dem Handelsregister A
-                            sdgDescription:
-                                description: ""
-                                type: object
-                                additionalProperties:
-                                    type: string
-                                example:
-                                    EN: Extract of the trade register department A for sole traders and corporations. (for example OHG, KG, GmbH, AG)
-                                    DE: Auszug aus dem Handelsregister Abteilung A für Einzelkaufleute und Personengesellschaften (z.B. OHG, KG, GmbH, AG)
-                            sdgIssuingDate:
-                                description: ""
-                                type: string
-                            sdgDistributionFormat:
-                                description: ""
-                                type: string
-                            sdgDistributionLanguage:
-                                description: ""
-                                type: string
-                            sdgDistributionConformsTo:
-                                description: ""
-                                type: string
-                            sdgDistributionTransformation:
-                                description: ""
-                                type: string
-                            sdgValiditiyPeriodStatDate:
-                                description: ""
-                                type: string
-                            sdgValiditiyPeriodEndsDate:
-                                description: ""
-                                type: string
-        ProcessingEvidenceResponse:
-            description: "The ProcessingEvidenceResponse object includes information about an estimate of when the evidences is available"
-            type: object
-            properties:
-                estimatedAvailability:
-                    description: "Describes an estimate in date/time when the evidence is available"
-                    type: string
-                    example: "2023-11-04T10:00:00Z"
-
-
+              apiName:
+                description: "Name of this API"
+                type: string
+              apiVersion:
+                description: "Version of this API"
+                type: string
+              apiReleased:
+                description: "Date when this API was released using RFC 3339"
+                type: string
+                format: date
+              apiDocumentation:
+                description: "URL of where further API documentation is available"
+                type: string
+                format: uri
+              apiStatus:
+                description: "Status of this API"
+                type: string
+          example:
+            apiName: Swedish Evidence Provider API
+            apiVersion: 2.0.0
+            apiReleased: 2026-01-30
+            apiDocumentation: https://github.com/diggsweden/sdg-intermediation-se
+            apiStatus: Active
+    ErrorResponse:
+      description: "Generic error response"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+          examples:
+            GenericErrorExample:
+              $ref: "#/components/examples/GenericErrorExample"
+  examples:
+    EvidenceRequestBodyExample:
+      summary: Example of an Evidence Request body
+      value:
+        evidenceSubject:
+          identityNumber: "197309069289"
+          type: "PERSONAL_IDENTITY_NUMBER"
+          naturalPerson:
+            identifier: "SE/IT/197309069289"
+            familyName: Greger
+            givenName: Nina
+            dateOfBirth: "1973-09-06"
+        conversationId: fe4c71e2-68d1-446e-b029-73bb1d9f871a
+        messageId: 4f4db3dc-b659-4563-8154-f2e917b69b20@oots.digg.se
+        requestId: ddff5fbb-88b7-447b-8e25-64000365eb5b
+        evidenceProviderId: "2021006883"
+        evidenceTypeClassification: >-
+          https://sr.oots.tech.ec.europa.eu/evidencetypeclassifications/SE/9e2c24f1-234e-439c-bd49-b6c8e3c4d87f
+        evidenceRequesterName:
+          EN: DiggProviderDemo
+        distributedAs: application/pdf
+    EvidenceFilesBodyExample:
+      summary: Example of an Evidence Files body
+      value:
+        evidenceFiles:
+          - mimetype: application/pdf
+            content: BASE64BINARYDATA
+            filename: cid:bc615698-9a45-42d2-9256-32b781c8ca7a@oots.se.accept.digg.se.pdf
+            evidenceName: "Proof of Birth"
+            issuingAuthority:
+              id: "2021006883"
+              name:
+                EN: DiggProviderDemo
+            isConformantTo:
+              evidenceTypeClassification: >-
+                https://sr.oots.tech.ec.europa.eu/evidencetypeclassifications/SE/9e2c24f1-234e-439c-bd49-b6c8e3c4d87f
+              title:
+                EN: Test Evidence Type
+            issuingDate: "2025-03-15"
+            distribution:
+              format: application/pdf
+              language:
+                - SV
+                - EN
+    InvalidInputExample:
+      summary: Example of an invalid input error response
+      value:
+        title: Invalid input
+        status: 400
+        detail: The personal identification number is not valid
+        instance: /api/v2/evidence-files
+        method: POST
+        additionalInfo: ["Not a personal identification number", "123456-78"]
+    InvalidAccessTokenExample:
+      summary: Example of an invalid access token error response
+      value:
+        title: Invalid access token
+        status: 401
+        detail: The provided access token is invalid or expired
+        instance: /api/v2/evidence-files
+        additionalInfo:
+          - Access token has expired
+          - Access token is malformed
+    EvidenceNotFoundExample:
+      summary: Example of an evidence not found error response
+      value:
+        title: Evidence not found
+        status: 404
+        detail: No evidence found for the given person identifier and evidence type
+        instance: /api/v2/evidence-files
+        method: POST
+        additionalInfo: ["Not a personal identification number", "123456-78"]
+    GenericErrorExample:
+      summary: Example of a generic error response
+      value:
+        title: Internal server error
+        status: 500
+        detail: An internal server error occurred
+        instance: /api/v2/evidence-files
+        method: POST
+    EvidenceProviderTimeoutExample:
+      summary: Example of an evidence provider timeout error response
+      value:
+        title: Timeout from evidence provider
+        status: 504
+        detail: A timeout occurred when trying to reach the evidence provider
+        instance: /api/v2/evidence-files
+        method: POST
+        additionalInfo: ["providerAgentId:", "123456-78"]
