@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  version: 2.0.0
+  version: 2.0.1
   title: Swedish Evidence Provider API
   contact:
     name: API Support
@@ -20,7 +20,7 @@ info:
     Evidence providers use the access token to authorize both the user and the API client.
 
     An example for how to use bearerAuth:
-    ``` 
+    ```
     Authorization: Bearer <jwt-token>
     ```
   x-limitations: There are no known problems or limitations.
@@ -76,8 +76,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProcessingEvidenceResponse"
-              example:
-                estimatedAvailability: "2023-11-04T10:00:00Z"
+              examples:
+                processingEvidenceExample:
+                  $ref: "#/components/examples/ProcessingEvidenceExample"
         "400":
           description: "Invalid input"
           content:
@@ -222,51 +223,69 @@ components:
         filename:
           type: string
         issuingAuthority:
-          type: object
-          properties:
-            id:
-              type: string
-            name:
-              $ref: "#/components/schemas/MultiLingualString"
+          $ref: "#/components/schemas/IssuingAuthority"
         evidenceName:
           type: string
         isConformantTo:
-          type: object
-          properties:
-            evidenceTypeClassification:
-              $ref: "#/components/schemas/EvidenceTypeClassification"
-            description:
-              $ref: "#/components/schemas/MultiLingualString"
-            title:
-              $ref: "#/components/schemas/MultiLingualString"
+          $ref: "#/components/schemas/EvidenceTypeReference"
         issuingDate:
           type: string
           format: date
           example: "2024-03-15"
         distribution:
-          type: object
-          properties:
-            format:
-              $ref: "#/components/schemas/DistributionFormat"
-            language:
-              type: array
-              items:
-                type: string
-            conformsTo:
-              type: string
-            transformation:
-              type: string
+          $ref: "#/components/schemas/EvidenceDistribution"
         validityPeriod:
-          type: object
-          properties:
-            startDate:
-              type: string
-              format: date
-            endDate:
-              type: string
-              format: date
+          $ref: "#/components/schemas/ValidityPeriod"
+    IssuingAuthority:
+      description: The authority that issued the evidence.
+      type: object
+      properties:
+        id:
+          description: The identifier of the issuing authority, typically a Swedish organization number (organisationsnummer).
+          type: string
+          example: "2021006883"
+        name:
+          $ref: "#/components/schemas/MultiLingualString"
+    EvidenceTypeReference:
+      description: Reference to the evidence type that this evidence conforms to, including its classification, title and description.
+      type: object
+      properties:
+        evidenceTypeClassification:
+          $ref: "#/components/schemas/EvidenceTypeClassification"
+        description:
+          $ref: "#/components/schemas/MultiLingualString"
+        title:
+          $ref: "#/components/schemas/MultiLingualString"
+    EvidenceDistribution:
+      description: Distribution information for the evidence file.
+      type: object
+      properties:
+        format:
+          $ref: "#/components/schemas/DistributionFormat"
+        language:
+          description: Language codes for the evidence content (ISO 639-1 two-letter codes in upper case)
+          type: array
+          items:
+            type: string
+            example: "SV"
+        conformsTo:
+          type: string
+        transformation:
+          type: string
+    ValidityPeriod:
+      description: The validity period of the evidence.
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+          example: "2026-01-01"
+        endDate:
+          type: string
+          format: date
+          example: "2029-12-31"
     DistributionFormat:
-      description: The format of an evidence file
+      description: The MIME type format of an evidence file
       type: string
       minLength: 1
       example: "application/pdf"
@@ -281,24 +300,50 @@ components:
       additionalProperties:
         type: string
       example:
-        en: Something in English.
-        de: Etwas auf Deutsch.
+        EN: Something in English.
+        DE: Etwas auf Deutsch.
     ProcessingEvidenceResponse:
       description: "The ProcessingEvidenceResponse object includes information about an estimate of when the evidence is available"
       type: object
+      required: [estimatedAvailability]
       properties:
         estimatedAvailability:
-          description: "Describes an estimate in date/time when the evidence is available using RFC 3339"
+          description: "Describes an estimate in date/time when the evidence is available (RFC 3339 date-time format)"
           type: string
           format: date-time
           example: "2023-11-04T10:00:00Z"
+    ApiInfoBody:
+      description: "Metadata about this API instance."
+      type: object
+      required: [apiName, apiVersion, apiReleased, apiDocumentation, apiStatus]
+      properties:
+        apiName:
+          description: "Name of this API"
+          type: string
+        apiVersion:
+          description: "Version of this API"
+          type: string
+        apiReleased:
+          description: "Date when this API was released (RFC 3339 full-date format)"
+          type: string
+          format: date
+          example: "2026-01-30"
+        apiDocumentation:
+          description: "URL of where further API documentation is available"
+          type: string
+          format: uri
+        apiStatus:
+          description: "Status of this API"
+          type: string
     ConversationId:
       description: Unique identifier used for tracking requests across the system.
       type: string
       format: uuid
       example: fe4c71e2-68d1-446e-b029-73bb1d9f871a
     MessageId:
-      description: Unique identifier used for tracking requests across the system.
+      description: |
+        Unique identifier used for tracking requests across the system.
+        Uses a Message-ID format defined in RFC 2822: a unique local part followed by @ and a domain.
       type: string
       example: 4f4db3dc-b659-4563-8154-f2e917b69b20@oots.digg.se
     RequestId:
@@ -334,27 +379,7 @@ components:
       content:
         application/json:
           schema:
-            title: "ApiInfoBody"
-            type: object
-            required: [apiName, apiVersion, apiReleased, apiDocumentation, apiStatus]
-            properties:
-              apiName:
-                description: "Name of this API"
-                type: string
-              apiVersion:
-                description: "Version of this API"
-                type: string
-              apiReleased:
-                description: "Date when this API was released using RFC 3339"
-                type: string
-                format: date
-              apiDocumentation:
-                description: "URL of where further API documentation is available"
-                type: string
-                format: uri
-              apiStatus:
-                description: "Status of this API"
-                type: string
+            $ref: "#/components/schemas/ApiInfoBody"
           example:
             apiName: Swedish Evidence Provider API
             apiVersion: 2.0.0
@@ -414,6 +439,10 @@ components:
               language:
                 - SV
                 - EN
+    ProcessingEvidenceExample:
+      summary: Example of a processing evidence response
+      value:
+        estimatedAvailability: "2023-11-04T10:00:00Z"
     InvalidInputExample:
       summary: Example of an invalid input error response
       value:
