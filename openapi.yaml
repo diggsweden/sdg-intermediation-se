@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  version: 2.0.1
+  version: 2.1.0
   title: Swedish Evidence Provider API
   contact:
     name: API Support
@@ -139,7 +139,16 @@ components:
     EvidenceRequestBody:
       description: "The EvidenceRequestBody object holds attributes to specify identity of person and evidence type."
       type: object
-      required: [evidenceSubject, conversationId, messageId, requestId, evidenceProviderId, evidenceTypeClassification]
+      required:
+        [
+          evidenceSubject,
+          conversationId,
+          messageId,
+          requestId,
+          evidenceProviderId,
+          evidenceTypeClassification,
+          distributedAs
+        ]
       properties:
         evidenceSubject:
           $ref: "#/components/schemas/EvidenceSubject"
